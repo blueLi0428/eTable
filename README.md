@@ -41,6 +41,7 @@ methods: {
 |  ----  | ----  | ----  | ----  | ---- |
 | id | Integer | - | true | 数据库字段主键 | 
 | tableId | String | - | true | 绑定的上述主键的name属性中的值，用于数据库查询时查询对应表格的所有列属性 |
+| tableIndex | Integer | - | false | 当前列在当前表格中的显示顺序 |
 | width | int | 0 | false | 当前列宽 |
 | prop | String | - | true | 当前列需要从数据中获取的属性名称(eg：{"age":"18", "sex": "男"}中的age和sex) |
 | show | boolean | false | false | 当前列是否需要显示 |
@@ -51,7 +52,12 @@ methods: {
 | fixed | String | - | false | 当前列是否固定，left为左边，right为右边 |
 | type | String | readonly | true | 编辑状态下当前单元格类别：参照input标签的type类型，其他： dateTime为时间控件，select为下拉框，selectVal中存入选择框的JSON字符串，格式参照selectVal， 如果为readonly则表示不可编辑, 如果为button，则表示当前列不可编辑，且增加按钮 |
 | search | boolean | false | false | 如果type为text，是否在输入框内最后追加搜索图标，且提供回调函数 |
-| selectVal | String | [] | false | 如果type为select,该属性为下拉 |
+| selectVal | String | [] | false | 如果type为select，该属性为下拉框中的选项。注：需提供JSON字符串选项 |
+| selectIsInput | boolean | false | 如果type为select，该属性为下拉框是够可手动新增，新增的label与value值均为输入值|
+| btnType | String | - | false | 如果type为button，该属性为按钮样式风格，参见elementui按钮风格 |
+| isPlain | boolean | false | false | 如果type为button，该属性为按钮样式plain风格 |
+| icon | String | - | false | 如果type为button，该属性为按钮前缀增加icon |
+
 
 ## 其他
 - 获取当前表格选中行（非多选表格）              this.$refs.tableTest.$refs.eTable.selection[0]
