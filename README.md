@@ -62,3 +62,7 @@ methods: {
 ## 其他
 - 获取当前表格选中行（非多选表格）              this.$refs.tableTest.$refs.eTable.selection[0]
 - 获取当前表格选中行（多选表格）                this.$refs.tableTest.$refs.eTable.selection
+
+
+## 现有BUG
+如果页面数据量较大，会造成页面卡顿，此BUG为elementui现存的BUG，解决方案有pl-table等
