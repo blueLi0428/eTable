@@ -53,7 +53,7 @@ methods: {
 | type | String | readonly | true | 编辑状态下当前单元格类别：参照input标签的type类型，其他： dateTime为时间控件，select为下拉框，selectVal中存入选择框的JSON字符串，格式参照selectVal， 如果为readonly则表示不可编辑, 如果为button，则表示当前列不可编辑，且增加按钮 |
 | search | boolean | false | false | 如果type为text，是否在输入框内最后追加搜索图标，且提供回调函数 |
 | selectVal | String | [] | false | 如果type为select，该属性为下拉框中的选项。注：需提供JSON字符串选项 |
-| selectIsInput | boolean | false | 如果type为select，该属性为下拉框是够可手动新增，新增的label与value值均为输入值|
+| selectIsInput | boolean | false | false | 如果type为select，该属性为下拉框是够可手动新增，新增的label与value值均为输入值|
 | btnType | String | - | false | 如果type为button，该属性为按钮样式风格，参见elementui按钮风格 |
 | isPlain | boolean | false | false | 如果type为button，该属性为按钮样式plain风格 |
 | icon | String | - | false | 如果type为button，该属性为按钮前缀增加icon |
