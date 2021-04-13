@@ -1,5 +1,5 @@
 # eTable
-基于elementui官方表格的封装
+基于pl-table组件封装的表格，用于解决用户自定义配置列的需求。
 ## 使用方式
 ```vue
 <e-table
