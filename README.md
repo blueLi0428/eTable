@@ -65,4 +65,4 @@ methods: {
 
 
 ## 现有BUG
-如果页面数据量较大，会造成页面卡顿，此BUG为elementui现存的BUG，解决方案有pl-table等
+如果页面数据量较大，会造成页面卡顿，此BUG为elementui现存的BUG，解决方案有pl-table等（已更新使用为pl-table组件）
