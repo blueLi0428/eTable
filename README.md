@@ -60,8 +60,8 @@ methods: {
 
 
 ## 其他
-- 获取当前表格选中行（非多选表格）              this.$refs.tableTest.$refs.eTable.selection[0]
-- 获取当前表格选中行（多选表格）                this.$refs.tableTest.$refs.eTable.selection
+- 获取当前表格选中行（非多选表格）              this.$refs.tableTest.selection[0]
+- 获取当前表格选中行（多选表格）                this.$refs.tableTest.selection
 
 
 ## 现有BUG
