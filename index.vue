@@ -1,6 +1,6 @@
 <template>
     <div class="home">
-        <el-table
+        <pl-table
             class="e-tables"
             :data="tableDataList"
             style="width: 100%"
@@ -9,7 +9,7 @@
             :stripe="stripe"
             :fit="fit"
             :show-header="showHeader"
-            :highlight-current-row="highlightCurrentRow && !showSelect"
+            :highlight-current-row="highlightCurrentRow"
             :row-key="rowKey"
             :empty-text="emptyText"
             :default-expand-all="defaultExpandAll"
@@ -18,65 +18,69 @@
             :tooltip-effect="tooltipEffect ? 'dark' : 'light'"
             :show-summary="showSummary"
             :sum-text="sumText"
-            :summary-method="showSummary ? (summaryMethod ? summaryMethod : null) : null"
-            :span-method="spanMethod ? spanMethod : null"
+            :summary-method="_summaryMethod"
+            :span-method="_spanMethod"
             :indent="indent"
-            @select="select ? select : null"
-            @select-all="selectAll ? selectAll : null"
-            @selection-change="selectionChange ? selectionChange : null"
-            @cell-mouse-enter="cellMouseEnter ? cellMouseEnter : null"
-            @cell-mouse-leave="cellMouseLeave ? cellMouseLeave : null"
-            @cell-click="cellClick ? cellClick : null"
-            @cell-dblclick="cellDblclick ? cellDblclick : null"
-            @row-click="rowClick ? rowClick : null"
-            @row-dblclick="rowDbClick ? rowDbClick : null"
-            @row-contextmenu="rowContextmenu ? rowContextmenu : null"
-            @header-click="headerClick ? headerClick : null"
-            @header-contextmenu="headerContextmenu ? headerContextmenu : null"
+            @select="_select"
+            @select-all="_selectAll"
+            @selection-change="_selectionChange"
+            @cell-mouse-enter="_cellMouseEnter"
+            @cell-mouse-leave="_cellMouseLeave"
+            @cell-click="_cellClick"
+            @cell-dblclick="_cellDblclick"
+            @row-click="_rowClick"
+            @row-dblclick="_rowDbClick"
+            @row-contextmenu="_rowContextmenu"
+            @header-click="_headerClick"
+            @header-contextmenu="_headerContextmenu"
             @current-change="_currentChange"
             :row-class-name="_rowClassName"
+            @header-dragend="_headerDragent"
             :row-style="{ height: 28+'px' }"
             :cell-style="{ padding: 0+'px' }"
             sort-orders="['ascending', 'descending', 'default']"
             :tree-props="{children: 'children', hasChildren: 'hasChildren'}"
             :size="size"
+            :use-virtual="useVirtual"
+            :row-height="rowHeight"
+            :big-data-checkbox="bigDataCheckbox"
             ref="eTable">
-            <el-table-column type="selection" width="50" v-if="showSelect" :align="align" reserve-selection/>
-            <el-table-column type="index" label="项次" width="50" v-if="showIndex" :align="align"/>
-            <el-table-column type="expand" label="操作" width="50" v-if="showExpand" :align="align"/>
-            <el-table-column v-for="(item,index) in tableColumns" :key="index" :label="item.name" :fixed="item.fixed ? item.fixed : false" :align="align"
+            <pl-table-column type="selection" width="50" v-if="showSelect" :align="align" reserve-selection/>
+            <pl-table-column type="index" label="项次" width="50" v-if="showIndex" :align="align"/>
+            <pl-table-column type="expand" label="操作" width="50" v-if="showExpand" :align="align"/>
+            <pl-table-column v-for="(item,index) in tableColumns" :key="index" :label="item.name" :fixed="item.fixed ? item.fixed : false" :align="align"
                              :prop="item.prop" :resizable="item.lock" :width="item.width" show-overflow-tooltip v-if="item.show" :sortable="item.sort">
                 <template slot-scope="{ row, column, $index }" v-if="showColumn">
-<!--                    是编辑状态-->
-                    <template v-if="isEdit && $refs.eTable.selection[0] === row">
-<!--                        只读类别-->
+                    <!--                    是编辑状态-->
+                    <template v-if="isEdit && $refs.eTable.$refs.singleTable.selection[0] === row">
+                        <!--                        只读类别-->
                         <template v-if="item.type === 'readonly'">
                             <span v-if="item.formatter" v-html="_formatter(row, column, row[item.prop], $index, item.formatter)" />
                             <span v-else>{{ row[item.prop] }}</span>
                         </template>
-<!--                        下拉框-->
+                        <!--                        下拉框-->
                         <template v-else-if="item.type === 'select'">
-<!--                            可手动输入的下拉框-->
+                            <!--                            可手动输入的下拉框-->
                             <el-select v-if="item.selectIsInput" v-model="row[item.prop]" placeholder="请选择" :size="size" allow-create filterable
                                        clearable @change="_rowSelectChange(row, column, $index)">
                                 <el-option v-for="(x, option) in item.selectVal" :label="x.label" :value="x.value" :key="option" />
                             </el-select>
-<!--                            不可手动新增的下拉框-->
+                            <!--                            不可手动新增的下拉框-->
                             <el-select v-else v-model="row[item.prop]" placeholder="请选择" :size="size" allow-create filterable clearable @change="_rowSelectChange(row, column, $index)">
                                 <el-option v-for="(x, option) in item.selectVal" :label="x.label" :value="x.value" :key="option" />
                             </el-select>
                         </template>
-<!--                        日期控件-->
+                        <!--                        日期控件-->
                         <template v-else-if="item.type === 'dateTime'">
                             <i><el-date-picker type="date" v-model="row[item.prop]" :size="size" @change="_rowInputChange(row, column, $index)"
                                                value-format="yyyyMMdd" format="yyyyMMdd" style="width: 100%" /></i>
                         </template>
-<!--                        时间日期控件-->
+                        <!--                        时间日期控件-->
                         <template v-else-if="item.type === 'dateAndTime'">
                             <i><el-date-picker type="datetime" v-model="row[item.prop]" :size="size" @change="_rowInputChange(row, column, $index)"
                                                value-format="yyyy-MM-dd HH:mm:ss" format="yyyy-MM-dd HH:mm:ss" style="width: 100%" /></i>
                         </template>
-<!--                        一般输入框-->
+                        <!--                        一般输入框-->
                         <template v-else>
                             <el-input :size="size" v-model="row[item.prop]" :autofocus="true" @input="_rowInputInput(row, column, $index)"
                                       :type="item.type" @change="_rowInputChange(row, column, $index)">
@@ -85,12 +89,12 @@
                                    @click="_searchIcon(row, column, $index)"></i>
                             </el-input>
                         </template>
-<!--                        编辑状态的显示内容-->
+                        <!--                        编辑状态的显示内容-->
                         <template v-else>
                             编辑状态下暂不支持显示当前按钮
                         </template>
                     </template>
-<!--                    非编辑状态-->
+                    <!--                    非编辑状态-->
                     <template v-else>
                         <template v-if="item.type === 'button'">
                             <el-button :size="size" @click="_rowButton(row,item.prop, $index)" :type="item.btnType" :plain="item.plain">
@@ -103,27 +107,99 @@
                         </span>
                     </template>
                 </template>
-            </el-table-column>
-        </el-table>
-        <div style="height: 40px" v-if="isPage">
+            </pl-table-column>
+        </pl-table>
+        <div v-if="isPage">
             <div class="block" style="float:right;">
                 <el-pagination
                     @size-change="_pageSizeChange"
                     @current-change="_pageCurrentChange"
-                    :current-page="pageParam.eCurrentPage"
+                    :current-page="pageParam.currentPage"
                     :page-sizes="pageRange"
-                    :page-size="pageParam.ePageSize"
+                    :page-size="pageParam.pageSize"
                     layout="total, sizes, prev, pager, next, jumper"
-                    :total="pageParam.eTotal"
+                    :total="pageParam.total"
                 ></el-pagination>
             </div>
         </div>
+        <el-button
+            v-if="isColumnEdit"
+            class="user_column"
+            type="text"
+            icon="el-icon-menu"
+            @click="showColumnEdit"
+        />
+        <el-dialog :visible.sync="isColumnDialog" v-el-drag-dialog width="65%" top="50px" title="列属性面板" center append-to-body>
+            <div>
+                <el-table :data="columnRowData" highlight-current-row @current-change="columnCurrentChange" ref="columnTable" stripe max-height="600">
+                    <el-table-column type="index" fixed="left" />
+                    <!--                    <el-table-column prop="prop" label="属性名" fixed="left" width="120px"/>-->
+                    <!--                    <el-table-column prop="tableIndex" label="顺序" width="50px" />-->
+                    <el-table-column prop="name" label="显示名称" width="100px" />
+                    <el-table-column label="宽度" width="120px" align="center">
+                        <template slot-scope="{ row }">
+                            <el-input-number
+                                v-model="row.width"
+                                style="width: 110px"
+                                :controls="false"
+                            />
+                        </template>
+                    </el-table-column>
+                    <el-table-column label="是否固定显示" width="200px">
+                        <template slot-scope="{ row }">
+                            <el-radio-group v-model="row.fixed" :fill="row.fixed === 'left' ? '#13ce66' : row.fixed === 'right' ? '#ff4949' : '#dddd00'">
+                                <el-radio-button label="left" fill="#13ce66">靠左</el-radio-button>
+                                <el-radio-button label="right" fill="#ff4949">靠右</el-radio-button>
+                                <el-radio-button label="" fill="#ff4949">不固定</el-radio-button>
+                            </el-radio-group>
+                        </template>
+                    </el-table-column>
+                    <el-table-column label="是否显示" width="135" align="center">
+                        <template slot-scope="{ row }">
+                            <el-radio-group v-model="row.show" :fill="row.show ? '#13ce66' : '#ff4949'">
+                                <el-radio-button :label="true" fill="#13ce66">显示</el-radio-button>
+                                <el-radio-button :label="false" fill="#ff4949">隐藏</el-radio-button>
+                            </el-radio-group>
+                        </template>
+                    </el-table-column>
+                    <el-table-column label="锁定" width="170" align="center">
+                        <template slot-scope="{ row }">
+                            <el-radio-group v-model="row.lock" :fill="row.lock ? '#13ce66' : '#ff4949'">
+                                <el-radio-button :label="true" fill="#13ce66">可拖动</el-radio-button>
+                                <el-radio-button :label="false" fill="#ff4949">禁止拖动</el-radio-button>
+                            </el-radio-group>
+                        </template>
+                    </el-table-column>
+                    <el-table-column label="是否支持排序" width="170" align="center">
+                        <template slot-scope="{ row }">
+                            <el-radio-group v-model="row.sort" :fill="row.sort ? '#13ce66' : '#ff4949'">
+                                <el-radio-button :label="true" fill="#13ce66">可排序</el-radio-button>
+                                <el-radio-button :label="false" fill="#ff4949">不可排序</el-radio-button>
+                            </el-radio-group>
+                        </template>
+                    </el-table-column>
+                    <el-table-column label="编辑" width="200px" align="center">
+                        <template slot-scope="{ row, column, index }">
+                            <el-button :disabled="row.tableIndex === 1" @click="columnRowUp(row, column, index)">上移</el-button>
+                            <el-button :disabled="row.tableIndex === columnRowData[columnRowData.length - 1].tableIndex" @click="columnRowDown(row, column, index)">下移</el-button>
+                        </template>
+                    </el-table-column>
+                </el-table>
+            </div>
+            <div slot="footer" class="dialog-footer">
+                <el-button type="success" plain @click="columnRowSave">保存</el-button>
+                <el-button type="warning" plain @click="columnRowReset" style="margin-left: 30px;">恢复默认</el-button>
+                <el-button type="primary" plain @click="isColumnDialog = false" style="margin-left: 30px;">取消设置</el-button>
+            </div>
+        </el-dialog>
     </div>
 </template>
 <script>
 import Cookies from 'js-cookie'
+import elDragDialog from '@/directive/el-drag-dialog' // base on element-ui
 export default {
     name: "eTable",
+    directives: { elDragDialog },
     props: {
         name: {
             type: String,
@@ -349,7 +425,26 @@ export default {
         rowButton: {
             type: Function,
         },
-
+        // 是否让用户自定义列属性
+        isColumnEdit: {
+            type: Boolean,
+            default: () => true
+        },
+        // 设置pl表格默认行高
+        rowHeight: {
+            type: Number,
+            default: () => 23
+        },
+        // 是否开启表格虚拟化，用于解决表格数据过多卡顿
+        useVirtual: {
+            type: Boolean,
+            default: () => false
+        },
+        // 当存在复选表格时，如果数据量超过3000建议开启此功能，用于解决复选操作时的卡顿
+        bigDataCheckbox: {
+            type: Boolean,
+            default: () => false
+        }
     },
     computed:{
 
@@ -359,22 +454,28 @@ export default {
             tableColumns: [],// 当前表格加载的列数据
             tableDataList: [],// 当前表格的数据源
             pageParam: {
-                eCurrentPage: 1,// 当前页
-                ePageSize: 10,// 每页大小
-                eTotal: 0,// 总条数
+                currentPage: 1,// 当前页
+                pageSize: 10,// 每页大小
+                total: 0,// 总条数
             },
             showColumn: true, //是否显示列
+            isColumnDialog: false,// 是否显示当前属性字段弹出层
+            columnSelectRow: {},// 选中行
+            columnRowData: [],// 另外设置数据源，防止在未保存的时候修改样式，造成页面混乱
+            data: [],
+            selection: [],
+            defaultData: [],// 初始化表格值，为初始化赋值时或者通过组件发请求获取到表格时的值
         };
     },
     created(){
-        this._getTableColumn()
-        this._getTableData()
     },
     updated(){
         this.$refs.eTable.doLayout()
     },
     mounted() {
-        this.pageParam.ePageSize = this.pageSize ? this.pageSize : 10
+        this.pageParam.pageSize = this.pageSize ? this.pageSize : 10
+        this._getTableColumn()
+        this._getTableData()
     },
     methods: {
         _getTableColumn() {
@@ -410,8 +511,8 @@ export default {
         async _getTableData() {
             let _this = this
             if (_this.dataUrl) {
-                _this.params.pageSize = _this.pageParam.ePageSize
-                _this.params.currentPage = _this.pageParam.eCurrentPage
+                _this.params.pageSize = _this.pageParam.pageSize
+                _this.params.currentPage = _this.pageParam.currentPage
                 let loading = _this.openLoading();
                 try {
                     const res = await _this.$store.dispatch('templateapi/getTableColumn', {
@@ -432,13 +533,13 @@ export default {
                             _this.showColumn = true
                         })
                         _this.pageParam = {
-                            eTotal: res.data.total,
-                            eCurrentPage: res.data.current,
-                            ePageSize: res.data.size
+                            total: res.data.total,
+                            currentPage: res.data.current,
+                            pageSize: res.data.size
                         }
                     }
                 } catch (e) {
-                    console.log('error', e)
+                    console.error('error', e)
                     _this.tableDataList = []
                 } finally {
                     loading.close()
@@ -446,9 +547,12 @@ export default {
             } else {
                 _this._addIndex(_this.tableData)
                 _this.tableDataList = _this.tableData
-                _this.pageParam.eTotal = _this.pageTotal
-                _this.pageParam.ePageSize = _this.pageSize
+                _this.pageParam.total = _this.pageTotal
+                _this.pageParam.pageSize = _this.pageSize
             }
+            _this.setCurrentRow(_this.tableDataList[0])
+            _this.defaultData = JSON.parse(JSON.stringify(_this.tableDataList))
+            _this.data = _this.tableDataList
         },
         /**
          * 增加_index属性
@@ -548,9 +652,9 @@ export default {
          * @private
          */
         _pageSizeChange(val) {
-            this.pageParam.ePageSize = val
-            this._getTableData()
+            this.pageParam.pageSize = val
             this.$emit("page-changed", this.pageParam)
+            this._getTableData()
         },
         /**
          * 当前页面change事件
@@ -558,9 +662,9 @@ export default {
          * @private
          */
         _pageCurrentChange(val) {
-            this.pageParam.eCurrentPage = val
-            this._getTableData()
+            this.pageParam.currentPage = val
             this.$emit("page-changed", this.pageParam)
+            this._getTableData()
         },
         /**
          * 某一行切换选中事件（非checkbox选中）
@@ -569,34 +673,38 @@ export default {
          * @private
          */
         _currentChange(currentRow, oldCurrentRow) {
+            if (currentRow === null) {
+                return
+            }
             // 是否为复选
             if (this.showSelect) {
                 // 保留选中状态
                 if (this.keepSelected) {
                     let isSelect = false
-                    for (let x of this.$refs.eTable.selection) {
+                    for (let x of this.$refs.eTable.$refs.singleTable.selection) {
                         if (currentRow === x) {
                             // 说明已选中，再次点击需要取消选中
-                            this.$refs.eTable.toggleRowSelection(currentRow, false)
+                            this.$refs.eTable.toggleRowSelection([{ row: currentRow, selected:false }])
                             isSelect = true
                             break
                         }
                     }
                     if (!isSelect) {
                         // 说明没有选中，需要设置为选中
-                        this.$refs.eTable.toggleRowSelection(currentRow, true)
+                        this.$refs.eTable.toggleRowSelection([{ row: currentRow, selected:true }])
                     }
                 } else {
                     // 不需要判断直接清理以往选中项，设置当前行为选中
                     this.$refs.eTable.clearSelection();
-                    this.$refs.eTable.toggleRowSelection(currentRow, true);
+                    this.$refs.eTable.toggleRowSelection([{ row: currentRow, selected:true }]);
                 }
             } else {
-                this.$refs.eTable.selection[0] = currentRow;
+                this.$refs.eTable.$refs.singleTable.selection[0] = currentRow;
             }
             if (this.currentChange) {
                 this.currentChange(currentRow, oldCurrentRow)
             }
+            this.selection = this.$refs.eTable.$refs.singleTable.selection
         },
         /**
          * 设置索引
@@ -606,7 +714,313 @@ export default {
          */
         _rowClassName({row, rowIndex}) {
             row._index = rowIndex
-        }
+        },
+
+        /**
+         * 当拖动表头改变了列的宽度的时候会触发该事件
+         * @param newWidth
+         * @param oldWidth
+         * @param column
+         * @param event
+         */
+        _headerDragent(newWidth, oldWidth, column, event) {
+            for (let x of this.tableColumns) {
+                if (x.prop === column.property && oldWidth === x.width) {
+                    x.width = newWidth
+                    this.columnRowData = JSON.parse(JSON.stringify(this.tableColumns))
+                    this.columnRowSave()
+                }
+            }
+        },
+        /**
+         * 合并行方法
+         * @param row 当前行
+         * @param column 当前列
+         * @param rowIndex 当前行索引
+         * @param columnIndex 当前列索引
+         */
+        _spanMethod(row, column, rowIndex, columnIndex) {
+            if (this.spanMethod) {
+                this.spanMethod(row, column, rowIndex, columnIndex)
+            }
+        },
+        /**
+         * 选中某一行（复选框）
+         * @param selection 选中的所有行
+         * @param row 当前选中行
+         */
+        _select(selection, row) {
+            if (this.select) {
+                this.select(selection, row)
+            }
+        },
+        /**
+         * 选中所有行数据（复选框）
+         * @param selection 选中的所有行
+         */
+        _selectAll(selection) {
+            if (this.selectAll) {
+                this.selectAll(selection)
+            }
+        },
+        /**
+         * 选中行发生变化触发（复选）
+         * @param selection 选中的所有行
+         */
+        _selectionChange(selection) {
+            if (this.selectionChange) {
+                this.selectionChange(selection)
+            }
+        },
+        /**
+         * 单元格hover进入后触发
+         * @param row 选中的所有行
+         * @param column 当前列
+         * @param cell 当前单元格
+         * @param event 事件
+         */
+        _cellMouseEnter(row, column, cell, event) {
+            if (this.cellMouseEnter) {
+                this.cellMouseEnter(row, column, cell, event)
+            }
+        },
+        /**
+         * 单元格hover移出后触发
+         * @param row 选中的所有行
+         * @param column 当前列
+         * @param cell 当前单元格
+         * @param event 事件
+         */
+        _cellMouseLeave(row, column, cell, event) {
+            if (this.cellMouseLeave) {
+                this.cellMouseLeave(row, column, cell, event)
+            }
+        },
+        /**
+         * 单元格单击事件
+         * @param row 选中的所有行
+         * @param column 当前列
+         * @param cell 当前单元格
+         * @param event 事件
+         */
+        _cellClick(row, column, cell, event) {
+            if (this.cellClick) {
+                this.cellClick(row, column, cell, event)
+            }
+        },
+        /**
+         * 单元格双击事件
+         * @param row 选中的所有行
+         * @param column 当前列
+         * @param cell 当前单元格
+         * @param event 事件
+         */
+        _cellDblclick(row, column, cell, event) {
+            if (this.cellDblclick) {
+                this.cellDblclick(row, column, cell, event)
+            }
+        },
+        /**
+         * 行双击事件
+         * @param row 选中的所有行
+         * @param column 当前列
+         * @param event 事件
+         */
+        _rowClick(row, column, event) {
+            if (this.rowClick) {
+                this.rowClick(row, column, event)
+            }
+        },
+        /**
+         * 行双击事件
+         * @param row 选中的所有行
+         * @param column 当前列
+         * @param event 事件
+         */
+        _rowDbClick(row, column, event){
+            if (this.rowDbClick) {
+                this.rowDbClick(row, column, event)
+            }
+        },
+        /**
+         * 某一行被鼠标右键时触发
+         * @param row 选中的所有行
+         * @param column 当前列
+         * @param event 事件
+         */
+        _rowContextmenu(row, column, event) {
+            if (this.rowContextmenu){
+                this.rowContextmenu(row, column, event)
+            }
+        },
+        /**
+         * 某一列表头被点击时
+         * @param column 当前列
+         * @param event 事件
+         */
+        _headerClick(column, event) {
+            if (this.headerClick) {
+                this.headerClick(column, event)
+            }
+        },
+        /**
+         * 某一列表头被鼠标右键点击时
+         * @param column 当前列
+         * @param event 事件
+         */
+        _headerContextmenu(column, event) {
+            if (this.headerContextmenu) {
+                this.headerContextmenu(column, event)
+            }
+        },
+        /**
+         * 自定义合计计算方法
+         * @param columns 未行
+         * @param data 数据源
+         */
+        _summaryMethod(columns, data) {
+            if (this.showSummary && this.summaryMethod) {
+                this.summaryMethod(columns, data)
+            }
+        },
+
+        /**
+         * 恢复数据显示为默认查询结果
+         */
+        _resetTableData() {
+            this.tableDataList = JSON.parse(JSON.stringify(this.defaultData))
+            this.data = this.tableDataList
+        },
+
+        /**
+         * 显示表格列用户自定义属性界面
+         */
+        showColumnEdit(){
+            this.columnRowData = JSON.parse(JSON.stringify(this.tableColumns))
+            this.isColumnDialog = true
+        },
+        /**
+         * 表格列属性设置界面当前用户选中行
+         * @param row
+         */
+        columnCurrentChange(row){
+            this.columnSelectRow = row
+        },
+        /**
+         * 当前选中行上移
+         * @param row
+         * @param column
+         * @param index
+         */
+        columnRowUp(row, column, index){
+            let up = JSON.parse(JSON.stringify(row))
+            for(let i = 0; i < this.columnRowData.length - 1; i++){
+                if(this.columnRowData[i + 1].tableIndex === up.tableIndex){
+                    this.columnRowData[i + 1] = JSON.parse(JSON.stringify(this.columnRowData[i]))
+                    this.columnRowData[i + 1].tableIndex = i + 2
+                    this.columnRowData[i] = up
+                    this.columnRowData[i].tableIndex = i + 1
+                    this.$refs.columnTable.setCurrentRow(this.columnRowData[i], true)
+                    return
+                }
+            }
+        },
+        /**
+         * 当前选中行下移
+         * @param row
+         * @param column
+         * @param index
+         */
+        columnRowDown(row, column, index){
+            let down = JSON.parse(JSON.stringify(row))
+            for(let i = 0; i < this.columnRowData.length - 1; i++){
+                if(this.columnRowData[i].tableIndex === down.tableIndex){
+                    this.columnRowData[i] = JSON.parse(JSON.stringify(this.columnRowData[i + 1]))
+                    this.columnRowData[i].tableIndex = i + 1
+                    this.columnRowData[i + 1] = down
+                    this.columnRowData[i + 1].tableIndex = i + 2
+                    this.$refs.columnTable.setCurrentRow(this.columnRowData[i + 1], true)
+                    return
+                }
+            }
+        },
+        /**
+         * 保存当前设置
+         */
+        columnRowSave(){
+            let param = {
+                userTableColumnStr: JSON.stringify(this.columnRowData),
+                tableName: this.name
+            }
+            let loading = this.openLoading("保存中...")
+            this.$store.dispatch('templateapi/updateByUserColumn', param).then(res =>{
+                if(res.code === 200){
+                    this.$message.success("修改成功！")
+                    this.tableColumns = JSON.parse(JSON.stringify(this.columnRowData))
+                    this.isColumnDialog = false
+                }else {
+                    this.$message.error("修改失败！")
+                }
+            }).finally(() =>{
+                loading.close()
+            })
+        },
+        /**
+         * 重置为初始化设置
+         */
+        columnRowReset(){
+            let param = {
+                tableName: this.name
+            }
+            let loading = this.openLoading("保存中...")
+            this.$store.dispatch('templateapi/resetUserColumn', param).then(res =>{
+                if(res.code === 200){
+                    this.$message.success("重置成功！")
+                    this.tableColumns = res.data
+                    this.isColumnDialog = false
+                }else {
+                    this.$message.error("重置失败！")
+                }
+            }).finally(() =>{
+                loading.close()
+            })
+        },
+
+        /**
+         * el-table原生方法移植
+         */
+        /**
+         * 设置某一行选中
+         * @param row
+         */
+        setCurrentRow(row) {
+            this.$refs.eTable.setCurrentRow(row)
+            this.selection = this.$refs.eTable.$refs.singleTable.selection
+        },
+        /**
+         * 复选框设置选中状态
+         * @param row 选中行
+         * @param bool 是否选中，默认true
+         */
+        toggleRowSelection(row, bool = true) {
+            this.$refs.eTable.toggleRowSelection([{ row: row, selected:bool }])
+            this.selection = this.$refs.eTable.$refs.singleTable.selection
+        },
+        /**
+         * 用于多选表格，切换所有行的选中状态
+         */
+        toggleAllSelection() {
+            this.$refs.eTable.toggleAllSelection()
+            this.selection = this.$refs.eTable.$refs.singleTable.selection
+        },
+        /**
+         * 多选表格清除所有选中行
+         */
+        clearSelection() {
+            this.$refs.eTable.clearSelection()
+            this.selection = this.$refs.eTable.$refs.singleTable.selection
+        },
+
     },
     watch:{
         params(){
@@ -617,18 +1031,47 @@ export default {
                 this.$emit('loadData', tableDataList)
             })
 
+        },
+        tableData() {
+            this.tableDataList = this.tableData
+            this.data = this.tableData
+            this.selection = this.$refs.eTable.$refs.singleTable.selection
+        },
+        pageTotal(val) {
+            this.pageParam.total = val
+        },
+        pageSize(val) {
+            this.pageParam.pageSize = val
         }
     }
 };
 </script>
 
 <style scoped>
-    /* 修改表格样式 */
-    .el-table tr td{
-        padding: 6px 0;
-    }
-    .e-tables .el-table__fixed-left{
-        height: 100% !important;
-    }
+.el-table tr td{
+    padding: 6px 0;
+}
+.e-tables .el-table__fixed-left{
+    height: 100% !important;
+}
+.cell span{
+    color: #000000;
+    font-weight: 700;
+}
+.home{
+    height: calc(100% - 12px);
+    position:relative;
+}
+.user_column{
+    position: absolute;
+    top: 0;
+    right: 5px;
+    z-index: 3;
+}
+</style>
+<style>
+.el-table__body tr.current-row>td{
+    background-color: #92ADC6 !important;
+}
 </style>
 
