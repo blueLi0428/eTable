@@ -1,10 +1,10 @@
 <template>
-    <div class="home">
+    <div class="home" ref="home">
         <pl-table
             class="e-tables"
             :data="tableDataList"
             style="width: 100%"
-            :height="height"
+            :height="tableHeight"
             :border="border"
             :stripe="stripe"
             :fit="fit"
@@ -37,7 +37,7 @@
             :row-class-name="_rowClassName"
             @header-dragend="_headerDragent"
             :row-style="{ height: 28+'px' }"
-            :cell-style="{ padding: 0+'px' }"
+            :cell-style="_cellStyle"
             sort-orders="['ascending', 'descending', 'default']"
             :tree-props="{children: 'children', hasChildren: 'hasChildren'}"
             :size="size"
@@ -46,15 +46,20 @@
             :big-data-checkbox="bigDataCheckbox"
             ref="eTable">
             <pl-table-column type="selection" width="50" v-if="showSelect" :align="align" reserve-selection/>
-            <pl-table-column type="index" label="项次" width="50" v-if="showIndex" :align="align"/>
+            <pl-table-column type="index" label="项次" width="50" v-if="showIndex" :align="align" :fixed="indexFixed" />
             <pl-table-column type="expand" label="操作" width="50" v-if="showExpand" :align="align"/>
+            <pl-table-column v-if="showAppendColumn && appendLeft" :label="appendText" :min-width="appendWidth" :align="align">
+                <template slot-scope="{ row, column, $index }">
+                    <slot name="append-column" :row="row" :column="column" :$index="$index" />
+                </template>
+            </pl-table-column>
             <pl-table-column v-for="(item,index) in tableColumns" :key="index" :label="item.name" :fixed="item.fixed ? item.fixed : false" :align="align"
-                             :prop="item.prop" :resizable="item.lock" :width="item.width" show-overflow-tooltip v-if="item.show" :sortable="item.sort">
+                             :prop="item.prop" :resizable="item.lock" :min-width="item.width" show-overflow-tooltip v-if="item.show" :sortable="item.sort">
                 <template slot-scope="{ row, column, $index }" v-if="showColumn">
                     <!--                    是编辑状态-->
-                    <template v-if="isEdit && $refs.eTable.$refs.singleTable.selection[0] === row">
+                    <template v-if="isEdit && $refs.eTable.$refs.singleTable.selection[0] === row || isSearchEdit">
                         <!--                        只读类别-->
-                        <template v-if="item.type === 'readonly'">
+                        <template v-if="item.type === 'readonly' && !isSearchEdit">
                             <span v-if="item.formatter" v-html="_formatter(row, column, row[item.prop], $index, item.formatter)" />
                             <span v-else>{{ row[item.prop] }}</span>
                         </template>
@@ -63,11 +68,11 @@
                             <!--                            可手动输入的下拉框-->
                             <el-select v-if="item.selectIsInput" v-model="row[item.prop]" placeholder="请选择" :size="size" allow-create filterable
                                        clearable @change="_rowSelectChange(row, column, $index)">
-                                <el-option v-for="(x, option) in item.selectVal" :label="x.label" :value="x.value" :key="option" />
+                                <el-option v-for="(x, option) in JSON.parse(item.selectVal)" :label="x.label" :value="x.value" :key="option" />
                             </el-select>
                             <!--                            不可手动新增的下拉框-->
-                            <el-select v-else v-model="row[item.prop]" placeholder="请选择" :size="size" allow-create filterable clearable @change="_rowSelectChange(row, column, $index)">
-                                <el-option v-for="(x, option) in item.selectVal" :label="x.label" :value="x.value" :key="option" />
+                            <el-select v-else v-model="row[item.prop]" placeholder="请选择" :size="size" clearable @change="_rowSelectChange(row, column, $index)">
+                                <el-option v-for="(x, option) in JSON.parse(item.selectVal)" :label="x.label" :value="x.value" :key="option" />
                             </el-select>
                         </template>
                         <!--                        日期控件-->
@@ -83,7 +88,8 @@
                         <!--                        一般输入框-->
                         <template v-else>
                             <el-input :size="size" v-model="row[item.prop]" :autofocus="true" @input="_rowInputInput(row, column, $index)"
-                                      :type="item.type" @change="_rowInputChange(row, column, $index)">
+                                      :type="item.type" @change="_rowInputChange(row, column, $index)" :ref="'eTableInput' + index + '_' + $index"
+                                      @keyup.enter.native="_inputEnter('eTableInput' + index + '_', $index)">
                                 <!-- 是否含有搜索按钮-->
                                 <i v-if="item.search" slot="suffix" class="el-icon-search el-input__icon"
                                    @click="_searchIcon(row, column, $index)"></i>
@@ -102,10 +108,13 @@
                                 {{ item.name}}
                             </el-button>
                         </template>
-                        <span v-else>
-                            {{ row[item.prop] }}
-                        </span>
+                        <span v-else v-html="_formatter(row, column, row[item.prop], $index, item.formatter)" />
                     </template>
+                </template>
+            </pl-table-column>
+            <pl-table-column v-if="showAppendColumn && !appendLeft" :label="appendText" :min-width="appendWidth" :align="align">
+                <template slot-scope="{ row, column, $index }">
+                    <slot name="append-column" :row="row" :column="column" :$index="$index" />
                 </template>
             </pl-table-column>
         </pl-table>
@@ -197,6 +206,7 @@
 <script>
 import Cookies from 'js-cookie'
 import elDragDialog from '@/directive/el-drag-dialog' // base on element-ui
+import elementResizeDetectorMaker from 'element-resize-detector'
 export default {
     name: "eTable",
     directives: { elDragDialog },
@@ -207,11 +217,20 @@ export default {
         },
         tableData: [ Object, Array ],
         pageSize: {
-            type: Number
+            type: Number,
+            default: 10,
+        },
+        currentPage: {
+            type: Number,
+            default: () => 1
         },
         dataUrl: {
             type: String,
             default: ''
+        },
+        isGetData: {
+            type: Boolean,
+            default: () => true
         },
         params: {
             type: Object,
@@ -360,6 +379,10 @@ export default {
         currentChange: {
             type: Function
         },
+        // 当前表格的cell-style事件
+        cellStyle: {
+            type: Function
+        },
         // 复选状态下，是否保留选中项，默认不保留
         keepSelected: {
             type: Boolean,
@@ -369,6 +392,11 @@ export default {
         align: {
             type: String,
             default: () => 'left'
+        },
+        // index项是否默认固定展示
+        indexFixed: {
+            type: Boolean,
+            default: () => false
         },
         // 是否显示复选框
         showSelect: {
@@ -444,6 +472,31 @@ export default {
         bigDataCheckbox: {
             type: Boolean,
             default: () => false
+        },
+        // 搜索状态下是否所有字段编辑
+        isSearchEdit: {
+            type: Boolean,
+            default: () => false
+        },
+        // 是否显示追加列
+        showAppendColumn: {
+            type: Boolean,
+            default: () => false
+        },
+        // 追加列的显示名
+        appendText: {
+            type: String,
+            default: () => '操作'
+        },
+        // 追加列的宽度
+        appendWidth: {
+            type: Number,
+            default: () => 80
+        },
+        // 追加列是否显示在索引列后
+        appendLeft: {
+            type: Boolean,
+            default: () => false
         }
     },
     computed:{
@@ -453,6 +506,7 @@ export default {
         return {
             tableColumns: [],// 当前表格加载的列数据
             tableDataList: [],// 当前表格的数据源
+            tableHeight: 0,// 表格高度
             pageParam: {
                 currentPage: 1,// 当前页
                 pageSize: 10,// 每页大小
@@ -473,6 +527,16 @@ export default {
         this.$refs.eTable.doLayout()
     },
     mounted() {
+        let _this = this
+        if (_this.height && _this.height.indexOf('%') !== -1) {
+            const erd = elementResizeDetectorMaker()
+            erd.listenTo(_this.$refs.home, function(element) {
+                _this.tableHeight = element.offsetHeight
+            })
+        } else {
+            this.tableHeight = this.height
+        }
+
         this.pageParam.pageSize = this.pageSize ? this.pageSize : 10
         this._getTableColumn()
         this._getTableData()
@@ -510,9 +574,11 @@ export default {
          */
         async _getTableData() {
             let _this = this
-            if (_this.dataUrl) {
-                _this.params.pageSize = _this.pageParam.pageSize
-                _this.params.currentPage = _this.pageParam.currentPage
+            if (_this.dataUrl && _this.isGetData) {
+                if (_this.isPage) {
+                    _this.params.pageSize = _this.pageParam.pageSize
+                    _this.params.currentPage = _this.pageParam.currentPage
+                }
                 let loading = _this.openLoading();
                 try {
                     const res = await _this.$store.dispatch('templateapi/getTableColumn', {
@@ -522,20 +588,33 @@ export default {
                     if (res.code !== 200) {
                         _this.$message.error(res.msg)
                     } else {
-                        if (res.data.records) {
-                            _this.tableDataList = res.data.records
+                        if (this.isPage) {
+                            if (res.data.records) {
+                                _this.tableDataList = res.data.records
+                            } else {
+                                _this.tableDataList = res.data
+                            }
                         } else {
                             _this.tableDataList = res.data
                         }
+
                         _this._addIndex(_this.tableDataList)
                         _this.showColumn = false
                         _this.$nextTick(() => {
                             _this.showColumn = true
                         })
-                        _this.pageParam = {
-                            total: res.data.total,
-                            currentPage: res.data.current,
-                            pageSize: res.data.size
+                        if (this.isPage) {
+                            _this.pageParam = {
+                                total: res.data.total,
+                                currentPage: res.data.current,
+                                pageSize: res.data.size
+                            }
+                        } else {
+                            _this.pageParam = {
+                                total: res.data.length,
+                                currentPage: 1,
+                                pageSize: res.data.length
+                            }
                         }
                     }
                 } catch (e) {
@@ -550,7 +629,9 @@ export default {
                 _this.pageParam.total = _this.pageTotal
                 _this.pageParam.pageSize = _this.pageSize
             }
-            _this.setCurrentRow(_this.tableDataList[0])
+            this.$nextTick(() => {
+                _this.setCurrentRow(_this.tableDataList[0])
+            })
             _this.defaultData = JSON.parse(JSON.stringify(_this.tableDataList))
             _this.data = _this.tableDataList
         },
@@ -560,9 +641,11 @@ export default {
          * @private
          */
         _addIndex(data) {
-            data.forEach((x, index) => {
-                this.$set(x, '_index', index)
-            })
+            if (data instanceof Array){
+                data.forEach((x, index) => {
+                    this.$set(x, '_index', index)
+                })
+            }
         },
         /**
          * 下拉框change事件
@@ -717,6 +800,18 @@ export default {
         },
 
         /**
+         *输入框回车切换下一行事件事件
+         **/
+        _inputEnter(refName, rowIndex) {
+            if (this.tableData.length <= rowIndex + 1)
+                // 设置选中行
+                this.setCurrentRow(this.tableData[rowIndex + 1])
+            this.$nextTick(() => {
+                this.$refs[refName + (rowIndex + 1)][0].focus()
+            })
+        },
+
+        /**
          * 当拖动表头改变了列的宽度的时候会触发该事件
          * @param newWidth
          * @param oldWidth
@@ -729,6 +824,27 @@ export default {
                     x.width = newWidth
                     this.columnRowData = JSON.parse(JSON.stringify(this.tableColumns))
                     this.columnRowSave()
+                }
+            }
+        },
+
+        /**
+         * 单元格style事件
+         * @param row 行数据
+         * @param column 列数据
+         * @param rowIndex 行索引
+         * @param columnIndex 列索引
+         **/
+        _cellStyle({row, column, rowIndex, columnIndex}) {
+            if (this.cellStyle) {
+                let style = this.cellStyle(row, column, rowIndex, columnIndex)
+                if (!style) {
+                    return {padding: 0 + 'px'}
+
+                }
+                if (!style.padding) {
+                    style.padding = 0 + 'px'
+                    return style
                 }
             }
         },
@@ -1042,6 +1158,9 @@ export default {
         },
         pageSize(val) {
             this.pageParam.pageSize = val
+        },
+        currentPage(val) {
+            this.pageParam.currentPage = val
         }
     }
 };
