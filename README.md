@@ -61,6 +61,7 @@ methods: {
 | isPlain | boolean | false | false | 如果type为button，该属性为按钮样式plain风格 |
 | icon | String | - | false | 如果type为button，该属性为按钮前缀增加icon |
 
+## 参数使用见wiki
 
 ## 其他
 - 获取当前表格选中行（非多选表格）              this.$refs.tableTest.selection[0]
@@ -68,5 +69,5 @@ methods: {
 
 
 ## 现有BUG
-如果页面数据量较大，会造成页面卡顿，此BUG为elementui现存的BUG，解决方案有pl-table等（已更新使用为pl-table组件）
+~~如果页面数据量较大，会造成页面卡顿，此BUG为elementui现存的BUG，解决方案有pl-table等~~（已更新使用为pl-table组件）
 大数据状态下，使用表格列编辑后无效，修改的数据不能绑定到数据源中。

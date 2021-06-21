@@ -138,7 +138,7 @@
             icon="el-icon-menu"
             @click="showColumnEdit"
         />
-        <el-dialog :visible.sync="isColumnDialog" v-el-drag-dialog width="65%" top="50px" title="列属性面板" center append-to-body>
+        <el-dialog :visible.sync="isColumnDialog" width="65%" top="50px" title="列属性面板" center append-to-body>
             <div>
                 <el-table :data="columnRowData" highlight-current-row @current-change="columnCurrentChange" ref="columnTable" stripe max-height="600">
                     <el-table-column type="index" fixed="left" />
@@ -205,11 +205,9 @@
 </template>
 <script>
 import Cookies from 'js-cookie'
-import elDragDialog from '@/directive/el-drag-dialog' // base on element-ui
 import elementResizeDetectorMaker from 'element-resize-detector'
 export default {
     name: "eTable",
-    directives: { elDragDialog },
     props: {
         name: {
             type: String,
@@ -1136,7 +1134,50 @@ export default {
             this.$refs.eTable.clearSelection()
             this.selection = this.$refs.eTable.$refs.singleTable.selection
         },
-
+        /**
+         * 表格组件导出
+         * @param data 数据源，不传则默认为当前表格展示数据
+         * @param fileName 导出文件名
+         * @param isAllColumn 是否展示隐藏设置字段
+         */
+        exportTableData(data, fileName, isAllColumn = false) {
+            let _this = this
+            let tHeader = []
+            let filterVal = []
+            let list
+            let titStyle = {font: {name: '宋体', sz: 12, color: {rgb: "000000"}, bold: true, italic: false, underline: false}, alignment: {horizontal: "center", vertical: "center"},}
+            let cellStyle = {font: {name: '宋体', sz: 12, color: {rgb: "000000"}, italic: false, underline: false}, alignment: {horizontal: "left", vertical: "center"}}
+            _this.tableColumns.forEach(x => {
+                if (isAllColumn) {
+                    tHeader.push(x.name)
+                    filterVal.push(x.prop)
+                } else {
+                    if (x.show) {
+                        tHeader.push(x.name)
+                        filterVal.push(x.prop)
+                    }
+                }
+            })
+            if (data && data.length > 0) {// 传入数据导出
+                list = JSON.parse(JSON.stringify(data))
+            } else {
+                list = JSON.parse(JSON.stringify(_this.tableDataList))
+            }
+            const excelData = _this.formatJson(filterVal, list)
+            import('@/vendor/Export2Excel').then(excel => {
+                excel.export_json_to_excel({
+                    header: tHeader,
+                    data: excelData,
+                    filename: fileName,
+                    autoWidth: false,
+                    bookType: 'xlsx',
+                    cellWidth: 15.29,
+                    titStyle: titStyle,
+                    cellStyle: cellStyle,
+                    rowHeight: 25
+                })
+            })
+        }
     },
     watch:{
         params(){
