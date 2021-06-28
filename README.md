@@ -28,7 +28,7 @@ export default {
 }
 ```
 
-- ### 页面内使用
+- ### 组件使用
 
 ```vue
 <e-table
@@ -87,7 +87,7 @@ methods: {
 | isPlain | boolean | false | false | 如果type为button，该属性为按钮样式plain风格 |
 | icon | String | - | false | 如果type为button，该属性为按钮前缀增加icon |
 
-## 参数使用见[wiki](/wiki)
+## 详细使用文档使用见[wiki](../../wiki)
 
 ## 其他
 - 获取当前表格选中行（非多选表格）              this.$refs.tableTest.selection[0]
