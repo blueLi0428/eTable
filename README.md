@@ -1,9 +1,35 @@
 # eTable
 基于[pl-table](https://github.com/livelyPeng/pl-table)组件封装的表格，用于解决用户自定义配置列的需求。
 使用[element-resize-detector](https://github.com/wnr/element-resize-detector)组件实现表格根据外层标签高度变化
+
 ## 使用场景
 单选表格、多选表格、可编辑表格、表格列自定义显示
 ## 使用方式
+
+- ### 全局注册
+
+```javascript
+// 此处index为组件地址
+import eTabLe from "index";
+Vue.component('e-table', eTabLe);
+```
+
+
+
+- ### 页面内注册
+
+```javascript
+// 此处index为组件地址
+import eTabLe from "index";
+export default {
+	components: {
+            eTabLe
+        }
+}
+```
+
+- ### 页面内使用
+
 ```vue
 <e-table
     height="610"
@@ -40,9 +66,9 @@ methods: {
 ```
 ## 后台返回表格列数据源格式
 
-| 属性名 | 属性类别 | 默认值 | 是否必须 | 备注 | 
+| 属性名 | 属性类别 | 默认值 | 是否必须 | 备注 |
 |  ----  | ----  | ----  | ----  | ---- |
-| id | Integer | - | true | 数据库字段主键 | 
+| id | Integer | - | true | 数据库字段主键 |
 | tableId | String | - | true | 绑定的上述主键的name属性中的值，用于数据库查询时查询对应表格的所有列属性 |
 | tableIndex | Integer | - | false | 当前列在当前表格中的显示顺序 |
 | width | int | 0 | false | 当前列宽 |
@@ -61,7 +87,7 @@ methods: {
 | isPlain | boolean | false | false | 如果type为button，该属性为按钮样式plain风格 |
 | icon | String | - | false | 如果type为button，该属性为按钮前缀增加icon |
 
-## 参数使用见wiki
+## 参数使用见[wiki](/wiki)
 
 ## 其他
 - 获取当前表格选中行（非多选表格）              this.$refs.tableTest.selection[0]
