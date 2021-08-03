@@ -1,6 +1,6 @@
 # eTable
-基于[pl-table](https://github.com/livelyPeng/pl-table)组件封装的表格，用于解决用户自定义配置列的需求。
-使用[element-resize-detector](https://github.com/wnr/element-resize-detector)组件实现表格根据外层标签高度变化
+基于[pl-table](https://github.com/livelyPeng/pl-table) 组件封装的表格，用于解决用户自定义配置列的需求。
+使用[element-resize-detector](https://github.com/wnr/element-resize-detector) 组件实现表格根据外层标签高度变化
 
 ## 使用场景
 单选表格、多选表格、可编辑表格、表格列自定义显示
@@ -11,7 +11,7 @@
 ```javascript
 // 此处index为组件地址
 import eTabLe from "index";
-Vue.component('e-table', eTabLe);
+Vue.component('e-table', eTable);
 ```
 
 
@@ -20,10 +20,10 @@ Vue.component('e-table', eTabLe);
 
 ```javascript
 // 此处index为组件地址
-import eTabLe from "index";
+import eTable from "index";
 export default {
 	components: {
-            eTabLe
+            eTable
         }
 }
 ```
