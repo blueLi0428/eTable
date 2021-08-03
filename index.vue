@@ -46,7 +46,11 @@
             :big-data-checkbox="bigDataCheckbox"
             ref="eTable">
             <pl-table-column type="selection" width="50" v-if="showSelect" :align="align" reserve-selection/>
-            <pl-table-column type="index" label="项次" width="50" v-if="showIndex" :align="align" :fixed="indexFixed" />
+            <pl-table-column type="index" label="项次" width="50" v-if="showIndex" :align="align" :fixed="indexFixed" >
+                <template slot-scope="{ row, column, $index }">
+                    {{ $index + 1 + ((pageParam.currentPage - 1) * pageParam.pageSize) }}
+                </template>
+            </pl-table-column>
             <pl-table-column type="expand" label="操作" width="50" v-if="showExpand" :align="align"/>
             <pl-table-column v-if="showAppendColumn && appendLeft" :label="appendText" :min-width="appendWidth" :align="align">
                 <template slot-scope="{ row, column, $index }">
